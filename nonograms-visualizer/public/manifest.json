@@ -1,0 +1,8 @@
+{
+  "short_name": "Nonograms Visualizer",
+  "name": "Nonograms Algorithm Visualizer",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#141414"
+}
