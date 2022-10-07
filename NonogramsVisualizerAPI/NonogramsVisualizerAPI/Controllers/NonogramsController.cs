@@ -41,7 +41,7 @@ namespace NonogramsVisualizerAPI.Controllers {
                 IWebElement nonogramTable = new WebDriverWait(driver, TimeSpan.FromSeconds(10)).Until(
                     elem => elem.FindElement(By.Id("nonogram_table"))
                 );
-
+                
                 string rowsLayerCountXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[2]/td[1]/table/tbody/tr[1]/td";
                 string colsLayerCountXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[1]/td[2]/table/tbody/tr";
 
