@@ -30,7 +30,6 @@ namespace NonogramsVisualizerAPI.Data {
             foreach (var row in doc.DocumentNode.SelectNodes(rowDataXPath)) {
                 foreach (var tile in row.ChildNodes) {
                     if (tile.ChildNodes.Count > 0) {
-                        Console.WriteLine(tile.ChildNodes[0].InnerText);
                         if (tile.ChildNodes[0].InnerText.Equals("&nbsp;")) {
                             rowData.Add(-1);
                         } else {
@@ -47,15 +46,12 @@ namespace NonogramsVisualizerAPI.Data {
             foreach (var col in doc.DocumentNode.SelectNodes(columnDataXPath)) {
                 foreach (var tile in col.ChildNodes) {
                     if (tile.ChildNodes.Count > 0) {
-                        Console.WriteLine(tile.ChildNodes[0].InnerText);
                         if (tile.ChildNodes[0].InnerText.Equals("&nbsp;")) {
                             columnData.Add(-1);
-                        }
-                        else {
+                        } else {
                             columnData.Add(int.Parse(tile.ChildNodes[0].InnerText));
                         }
-                    }
-                    else {
+                    } else {
                         Console.WriteLine("Iterated over tile without child element");
                     }
                 }

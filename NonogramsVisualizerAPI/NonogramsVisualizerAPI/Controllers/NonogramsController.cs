@@ -35,7 +35,6 @@ namespace NonogramsVisualizerAPI.Controllers {
                 bool hasColor = nonogramCode.Contains("-c");
                 string code = nonogramCode.Split('-')[0];
                 string url = $"https://www.nonograms.org/nonograms{(hasColor ? "2" : "")}/i/{code}";
-                string data = await client.GetStringAsync($"https://www.nonograms.org/nonograms{(hasColor ? "2" : "")}/i/{code}");
 
                 driver.Navigate().GoToUrl(url);
 
@@ -46,13 +45,12 @@ namespace NonogramsVisualizerAPI.Controllers {
                 // Now that we've navigated to the site and the nonogram is populated, we can scrape the html values without holding onto the webdriver
                 HtmlDocument doc = new HtmlDocument();
                 doc.LoadHtml(driver.PageSource);
-                NonogramData nonogram = new NonogramData(doc);
 
                 NonogramsDriver.ReturnControl();
 
-                return Json(nonogram);
+                NonogramData nonogram = new NonogramData(doc);
 
-                return new EmptyResult();
+                return Json(JsonConvert.SerializeObject(nonogram));
             } catch (Exception e) {
                 Console.WriteLine(e);
                 return StatusCode(500);
