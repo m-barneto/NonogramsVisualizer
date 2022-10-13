@@ -8,21 +8,23 @@ namespace NonogramsVisualizerAPI.Data {
         public int columnLayers, rowLayers;
         public List<string> colorCodes;
         public List<int> rowData, columnData;
+        public List<int> rowColorData, columnColorData;
 
 
-        public NonogramData(HtmlDocument doc) {
+        public NonogramData(HtmlDocument doc, bool hasColor) {
+            this.hasColor = hasColor;
+
             string colorTableXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr";
             
-
             string rowsLayerCountXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[2]/td[1]/table/tbody/tr[1]/td";
             string colsLayerCountXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[1]/td[2]/table/tbody/tr";
 
             string rowDataXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[1]/td[2]/table/tbody/tr";
             string columnDataXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[2]/td[1]/table/tbody/tr";
 
-            HtmlNode colorTable = doc.DocumentNode.SelectSingleNode(colorTableXPath);
-
-            hasColor = colorTable != null;
+            HtmlNode colorTable = null;
+            if (hasColor)
+                colorTable = doc.DocumentNode.SelectSingleNode(colorTableXPath);
 
             colors = 0;
             colorCodes = new List<string>();
@@ -55,14 +57,20 @@ namespace NonogramsVisualizerAPI.Data {
             rowData = new List<int>();
             columnData = new List<int>();
 
+            rowColorData = new List<int>();
+            columnColorData = new List<int>();
 
             foreach (var row in doc.DocumentNode.SelectNodes(rowDataXPath)) {
                 foreach (var tile in row.ChildNodes) {
                     if (tile.ChildNodes.Count > 0) {
                         if (tile.ChildNodes[0].InnerText.Equals("&nbsp;")) {
                             rowData.Add(-1);
+                            if (hasColor)
+                                rowColorData.Add(-1);
                         } else {
                             rowData.Add(int.Parse(tile.ChildNodes[0].InnerText));
+                            if (hasColor)
+                                rowColorData.Add(colorCodes.IndexOf(tile.GetAttributeValue("style", "-1").Substring("background:#".Length, 6)));
                         }
                     } else {
                         Console.WriteLine("Iterated over tile without child element");
@@ -75,8 +83,12 @@ namespace NonogramsVisualizerAPI.Data {
                     if (tile.ChildNodes.Count > 0) {
                         if (tile.ChildNodes[0].InnerText.Equals("&nbsp;")) {
                             columnData.Add(-1);
+                            if (hasColor)
+                                columnColorData.Add(-1);
                         } else {
                             columnData.Add(int.Parse(tile.ChildNodes[0].InnerText));
+                            if (hasColor)
+                                columnColorData.Add(colorCodes.IndexOf(tile.GetAttributeValue("style", "-1").Substring("background:#".Length, 6)));
                         }
                     } else {
                         Console.WriteLine("Iterated over tile without child element");

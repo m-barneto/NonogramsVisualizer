@@ -48,7 +48,7 @@ namespace NonogramsVisualizerAPI.Controllers {
 
                 NonogramsDriver.ReturnControl();
 
-                NonogramData nonogram = new NonogramData(doc);
+                NonogramData nonogram = new NonogramData(doc, hasColor);
 
                 return Json(JsonConvert.SerializeObject(nonogram));
             } catch (Exception e) {
