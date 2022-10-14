@@ -19,8 +19,8 @@ namespace NonogramsVisualizerAPI.Data {
             string rowsLayerCountXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[2]/td[1]/table/tbody/tr[1]/td";
             string colsLayerCountXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[1]/td[2]/table/tbody/tr";
 
-            string rowDataXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[1]/td[2]/table/tbody/tr";
-            string columnDataXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[2]/td[1]/table/tbody/tr";
+            string columnDataXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[1]/td[2]/table/tbody/tr";
+            string rowDataXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[2]/tbody/tr[2]/td[1]/table/tbody/tr";
 
             HtmlNode colorTable = null;
             if (hasColor)
@@ -33,8 +33,8 @@ namespace NonogramsVisualizerAPI.Data {
                 rowsLayerCountXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[3]/tbody/tr[2]/td[1]/table/tbody/tr[1]/td";
                 colsLayerCountXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[3]/tbody/tr[1]/td[2]/table/tbody/tr";
 
-                rowDataXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[3]/tbody/tr[2]/td[1]/table/tbody/tr";
-                columnDataXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[3]/tbody/tr[1]/td[2]/table/tbody/tr";
+                columnDataXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[3]/tbody/tr[2]/td[1]/table/tbody/tr";
+                rowDataXPath = "/html/body/table/tbody/tr[1]/td[2]/div[2]/table[3]/tbody/tr[1]/td[2]/table/tbody/tr";
 
                 colors = colorTable!.ChildNodes.Count;
 
