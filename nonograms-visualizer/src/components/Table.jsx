@@ -11,9 +11,9 @@ export default class Table extends Component {
             <tr key={rowId}>
               {
                 new Array(this.props.columns).fill(0).map((item, colId) => (
-                  <td key={rowId + "," + colId}>
+                  <td key={colId + "," + rowId} tile={this.props.type} x={colId} y={rowId}>
                     <div>{
-                    this.props.data[(rowId * this.props.columns) + colId] == -1 ? "" : this.props.data[(rowId * this.props.columns) + colId]
+                    this.props.data[(rowId * this.props.columns) + colId] === -1 ? "" : this.props.data[(rowId * this.props.columns) + colId]
                     }</div>
                   </td>
                 ))
