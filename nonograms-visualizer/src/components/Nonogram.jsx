@@ -11,6 +11,14 @@ export default class Nonogram extends Component {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  getColumn(colId) {
+    
+  }
+
+  getRow(rowid) {
+
+  }
+
   start = async() => {
     console.log("Waiting for table to populate.");
     while (document.querySelectorAll("Table").length === 0) {
@@ -108,6 +116,8 @@ export default class Nonogram extends Component {
         });
       }
     }
+
+    // Go through each column and check the board to see if it's acceptable
   }
 
   render() {
