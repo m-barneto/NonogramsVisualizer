@@ -26,13 +26,34 @@ class Tile {
 }
 
 class Board {
-
   constructor(data, document) {
     this.data = data;
     this.document = document;
 
-    this.columns = data['columns'];
-    this.rows = data['rows'];
+    this.columns = Number(data['columns']);
+    this.rows = Number(data['rows']);
+
+    this.columnLayers = Number(data['columnLayers']);
+    this.rowLayers = Number(data['rowLayers']);
+
+    this.columnInst = [];
+    this.rowInst = [];
+
+    for (let i = 0; i < this.columnLayers; i++) {
+      let colRow = [];
+      for (let j = 0; j < this.columns; j++) {
+        colRow.push(data['columnData'][i * this.columns + j]);
+      }
+      this.columnInst.push(colRow);
+    }
+    this.rowInst = [];
+    for (let i = 0; i < this.rowLayers; i++) {
+      let rowCol = [];
+      for (let j = 0; j < this.rows; j++) {
+        rowCol.push(data['rowData'][j * this.rowLayers + i])
+      }
+      this.rowInst.push(rowCol);
+    }
 
     this.board = [];
     for (let x = 0; x < this.columns; x++) {
@@ -42,6 +63,10 @@ class Board {
       }
       this.board.push(row);
     }
+  }
+
+  setTileState(x, y, tileState) {
+    this.board[x][y].state = tileState;
   }
 }
 
