@@ -5,7 +5,7 @@ import Solver from '../nonogram/NonogramSolver';
 export default class Nonogram extends Component {
   constructor(props) {
     super(props);
-    this.data = JSON.parse("{\"hasColor\":false,\"columns\":9,\"rows\":7,\"colors\":0,\"columnLayers\":3,\"rowLayers\":2,\"colorCodes\":[],\"rowData\":[-1,9,1,1,1,1,1,1,-1,9,-1,1,-1,3],\"columnData\":[-1,-1,-1,1,-1,1,-1,-1,-1,-1,1,1,1,1,1,1,1,-1,5,1,1,1,3,1,1,1,5],\"rowColorData\":[],\"columnColorData\":[]}");
+    this.data = JSON.parse("{\"hasColor\":false,\"columns\":5,\"rows\":7,\"colors\":0,\"columnLayers\":3,\"rowLayers\":2,\"colorCodes\":[],\"rowData\":[-1,3,1,1,-1,3,-1,1,-1,1,-1,2,-1,3],\"columnData\":[-1,1,-1,-1,-1,1,1,1,1,-1,1,2,5,1,1],\"rowColorData\":[],\"columnColorData\":[]}");
     this.start();
   }
   sleep(ms) {

@@ -16,10 +16,16 @@ class Tile {
     this.state = state;
     switch(state) {
       case TileState.Empty:
+        this.element.childNodes[0].style.backgroundColor = "#000";
         break;
       case TileState.Filled:
+        this.element.childNodes[0].style.backgroundColor = "#999";
         break;
       case TileState.Flagged:
+        
+        break;
+      default:
+        console.log("Error tile state not valid.");
         break;
     }
   }
@@ -68,6 +74,30 @@ class Board {
   setTileState(x, y, tileState) {
     this.board[x][y].state = tileState;
   }
+
+  getColumnInstructions(layer) {
+    return this.columnInst[layer];
+  }
+
+  getSingleColInstructions(colId) {
+    let column = [];
+    for (let i = 0; i < this.columnLayers; i++) {
+      column.push(this.columnInst[i][colId]);
+    }
+    return column;
+  }
+
+  getRowInstructions(layer) {
+    return this.rowInst[layer];
+  }
+
+  getSingleRowInstructions(rowId) {
+    let row = [];
+    for (let i = 0; i < this.rowLayers; i++) {
+      row.push(this.rowInst[i][rowId]);
+    }
+    return row;
+  }
 }
 
 export default class Solver {
@@ -80,7 +110,7 @@ export default class Solver {
   shadeCompletedRows(colSums, colNumTiles, rowSums, rowNumTiles) {
     let colSpaceTaken = {};
     let rowSpaceTaken = {};
-  
+
     for (let col in colSums) {
       let spaceTaken = colSums[col];
       if (colNumTiles[col] > 0) {
@@ -127,52 +157,54 @@ export default class Solver {
   }
   
   async solve(data, document) {
-      console.log('reee');
-      console.log("Get sum of all columns and rows");
       let colSums = {};
       let colNumTiles = {};
       let rowSums = {};
       let rowNumTiles = {};
   
       // Gets all top level column tiles
-      let colTiles = this.document.querySelectorAll("[tile=col][y='0']");
+      let colTiles = this.board.getColumnInstructions(0);
+
       // Iterate over them and sum the values
-      colTiles.forEach(tile => {
-        let colId = tile.getAttribute("x");
+      for (let i = 0; i < colTiles.length; i++) {
+        let colId = i;
         if (!(colId in colSums) || !(colId in colNumTiles)) {
           colSums[colId] = 0;
           colNumTiles[colId] = 0;
         }
   
         // Get all tiles in column
-        let columnChildren = this.document.querySelectorAll("[tile=col][x='" + colId + "']");
+        let columnChildren = this.board.getSingleColInstructions(colId);
         columnChildren.forEach(colChild => {
-          colSums[colId] += Number(colChild.childNodes[0].innerHTML);
-          if (Number(colChild.childNodes[0].innerHTML !== "")) {
+          if (colChild === -1) return;
+          colSums[colId] += Number(colChild);
+          if (Number(colChild !== -1)) {
             colNumTiles[colId] += 1;
           }
         });
-      });
+      }
       
       // Gets all leftmost row tiles
-      let rowTiles = this.document.querySelectorAll("[tile=row][x='0']");
+      let rowTiles = this.board.getRowInstructions(0);
+      
       // Iterate over them and sum the values
-      rowTiles.forEach(tile => {
-        let rowId = tile.getAttribute("y");
+      for (let i = 0; i < rowTiles.length; i++) {
+        let rowId = i;
         if (!(rowId in rowSums) || !(rowId in rowNumTiles)) {
           rowSums[rowId] = 0;
           rowNumTiles[rowId] = 0;
         }
   
         // Get all tiles in row
-        let rowChildren = this.document.querySelectorAll("[tile=row][y='" + rowId + "']");
+        let rowChildren = this.board.getSingleRowInstructions(rowId);
         rowChildren.forEach(rowChild => {
-          rowSums[rowId] += Number(rowChild.childNodes[0].innerHTML);
-          if (Number(rowChild.childNodes[0].innerHTML !== "")) {
+          if (rowChild === -1) return;
+          rowSums[rowId] += Number(rowChild);
+          if (Number(rowChild !== -1)) {
             rowNumTiles[rowId] += 1;
           }
         });
-      });
+      }
       this.shadeCompletedRows(colSums, colNumTiles, rowSums, rowNumTiles);
       // Go through each column and check the board to see if it's acceptable
   }
