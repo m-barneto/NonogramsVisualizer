@@ -1,29 +1,33 @@
 const TileState = {
   Empty: 0,
   Filled: 1,
-  Flagged: 2,
+  Unknown: 2,
 };
 
 class Tile {
   constructor(x, y, document) {
     this.x = x;
     this.y = y;
-    this.state = TileState.Empty;
-    this.element = document.querySelectorAll(
-      "[tile=board][x='" + x + "'][y='" + y + "']"
-    );
+    this.document = document;
+    this.selector = "[tile=board][x='" + x + "'][y='" + y + "']";
+    this.setState(TileState.Unknown);
   }
 
   setState(state) {
+    let element = this.document.querySelectorAll(this.selector)[0];
     this.state = state;
     switch (state) {
       case TileState.Empty:
-        this.element.childNodes[0].style.backgroundColor = "#000";
+        element.childNodes[0].style.backgroundColor = "#999";
+        element.childNodes[0].innerText = "";
         break;
       case TileState.Filled:
-        this.element.childNodes[0].style.backgroundColor = "#999";
+        element.childNodes[0].style.backgroundColor = "#333";
+        element.childNodes[0].innerText = "";
         break;
-      case TileState.Flagged:
+      case TileState.Unknown:
+        element.childNodes[0].style.backgroundColor = "";
+        element.childNodes[0].innerText = "?";
         break;
       default:
         console.log("Error tile state not valid.");
@@ -73,11 +77,7 @@ class Board {
   }
 
   setTileState(x, y, tileState) {
-    this.board[x][y].state = tileState;
-  }
-
-  getColumnInstructions(layer) {
-    return this.columnInst[layer];
+    this.board[x][y].setState(tileState);
   }
 
   getSingleColInstructions(colId) {
@@ -93,10 +93,6 @@ class Board {
     return column;
   }
 
-  getRowInstructions(layer) {
-    return this.rowInst[layer];
-  }
-
   getSingleRowInstructions(rowId) {
     let row = [];
     for (let i = 0; i < this.rowLayers; i++) {
@@ -109,6 +105,128 @@ class Board {
     }
     return row;
   }
+
+  getNumberOfSpaces(idx, isRow) {
+    let instructions = undefined;
+    let length = undefined;
+
+    if (isRow) {
+      length = this.columns;
+      instructions = this.getSingleRowInstructions(idx);
+    } else {
+      length = this.rows;
+      instructions = this.getSingleColInstructions(idx);
+    }
+
+    let sumOfInstructions = 0;
+    instructions.forEach((inst) => {
+      sumOfInstructions += inst;
+    });
+
+    let spaceTakenUp = sumOfInstructions + instructions.length - 1;
+    let numSpacesLeft = length - spaceTakenUp;
+    return numSpacesLeft;
+  }
+
+  getInstructionAsGridSet(instr, gridLength) {
+    let gridPerm = [];
+    for (let i = 0; i < gridLength; i++) {
+      gridPerm.push(TileState.Empty);
+    }
+
+    let currIdx = 0;
+    for (let i = 0; i < instr.length; i++) {
+      // get instruction value
+      let inst = instr[i];
+      // get space amount for this instruction
+      let spaceBefore = i === 0 ? 0 : 1;
+
+      for (let j = 0; j < spaceBefore; j++) {
+        gridPerm[currIdx + j] = TileState.Empty;
+      }
+      currIdx += spaceBefore;
+
+      for (let j = 0; j < inst; j++) {
+        gridPerm[currIdx + j] = TileState.Filled;
+      }
+      currIdx += inst;
+    }
+    return gridPerm;
+  }
+
+  tryCompleteInstruction(idx, isRow) {
+    let isCompletable = this.getNumberOfSpaces(idx, isRow) === 0;
+    if (!isCompletable) return;
+
+    // loop through tiles in row/col
+    let gridSet = this.getInstructionAsGridSet(
+      isRow
+        ? this.getSingleRowInstructions(idx)
+        : this.getSingleColInstructions(idx)
+    );
+
+    if (isRow) {
+      for (let x = 0; x < this.columns; x++) {
+        this.board[x][idx].setState(gridSet[x]);
+      }
+    } else {
+      for (let y = 0; y < this.rows; y++) {
+        this.board[idx][y].setState(gridSet[y]);
+      }
+    }
+  }
+
+  getGridSet(idx, isRow) {
+    let gridSet = [];
+    if (isRow) {
+      for (let x = 0; x < this.columns; x++) {
+        gridSet.push(this.board[x][idx].state);
+      }
+    } else {
+      for (let y = 0; y < this.rows; y++) {
+        gridSet.push(this.board[idx][y].state);
+      }
+    }
+    return gridSet;
+  }
+
+  isCompatableSet(gridSet, idx, isRow) {
+    let boardGridSet = this.getGridSet(idx, isRow);
+    if (boardGridSet.length !== gridSet.length) {
+      console.log(
+        "Comparing board gridset to incorrect length permutation gridset"
+      );
+      return false;
+    }
+
+    for (let i = 0; i < gridSet.length; i++) {
+      if (boardGridSet[i] === TileState.Unknown) continue;
+      else {
+        if (boardGridSet[i] !== gridSet[i]) return false;
+      }
+    }
+
+    return true;
+  }
+
+  setFinalGridSet(gridSet, idx, isRow) {
+    for (let i = 0; i < gridSet.length; i++) {
+      if (isRow) {
+        this.setTileState(i, idx, gridSet[i]);
+      } else {
+        this.setTileState(idx, i, gridSet[i]);
+      }
+    }
+  }
+
+  isSolved() {
+    for (let x = 0; x < this.columns; x++) {
+      for (let y = 0; y < this.rows; y++) {
+        if (this.board[x][y].state === TileState.Unknown) return false;
+      }
+    }
+    return true;
+  }
 }
 
 export default class Solver {
@@ -116,6 +234,14 @@ export default class Solver {
     this.document = document;
     this.data = data;
     this.board = new Board(data, document);
+    this.possibleColumnPerms = [];
+    for (let x = 0; x < this.board.columns; x++) {
+      this.possibleColumnPerms.push([]);
+    }
+    this.possibleRowPerms = [];
+    for (let y = 0; y < this.board.rows; y++) {
+      this.possibleRowPerms.push([]);
+    }
   }
 
   isValidPermute(perm, maxVal) {
@@ -147,7 +273,7 @@ export default class Solver {
 
     for (let i = 0; i < chars_length ** password_length; i++) {
       for (let i2 = 0; i2 < password_length; i2++) {
-        if (password[i2] == chars_length) {
+        if (password[i2] === chars_length) {
           password[i2 + 1]++;
           password[i2] = 0;
         }
@@ -156,6 +282,7 @@ export default class Solver {
       for (let i2 = 0; i2 < password_length; i2++) {
         perm.push(chars[password[i2]]);
       }
+
       if (this.isValidPermute(perm, maxVal)) {
         permutations.push(perm);
       }
@@ -196,7 +323,7 @@ export default class Solver {
     return gridPerms;
   }
 
-  async findPermutations(instr, length) {
+  findPermutations(instr, length) {
     let numGroups = instr.length;
 
     let sumOfInstructions = 0;
@@ -206,127 +333,152 @@ export default class Solver {
 
     let numSpaces = length - sumOfInstructions;
 
-    let permLength = numGroups + numSpaces;
-    console.log(permLength);
-
     let values = [];
-    for (let i = 0; i < numSpaces; i++) {
+    for (let i = 0; i < numSpaces + 1; i++) {
       values.push(i);
     }
+
     let perms = this.getPermutations(values, numGroups, numSpaces);
-    //let perms = [[0, 1, 1]];
+
     let gridPerms = this.translatePermsToGridFormat(instr, perms, length);
-    console.log(gridPerms);
+    return gridPerms;
   }
 
-  shadeCompletedRows(colSums, colNumTiles, rowSums, rowNumTiles) {
-    let colSpaceTaken = {};
-    let rowSpaceTaken = {};
-
-    for (let col in colSums) {
-      let spaceTaken = colSums[col];
-      if (colNumTiles[col] > 0) {
-        spaceTaken += colNumTiles[col] - 1;
-      }
-      colSpaceTaken[col] = spaceTaken;
+  shadeCompletedRows() {
+    // Go through all instructions
+    for (let col = 0; col < this.board.columns; col++) {
+      this.board.tryCompleteInstruction(col, false);
     }
-
-    for (let row in rowSums) {
-      let spaceTaken = rowSums[row];
-      if (rowNumTiles[row] > 0) {
-        spaceTaken += rowNumTiles[row] - 1;
-      }
-      rowSpaceTaken[row] = spaceTaken;
+    for (let row = 0; row < this.board.rows; row++) {
+      this.board.tryCompleteInstruction(row, true);
     }
+  }
 
-    for (let col in colSpaceTaken) {
-      if (colSpaceTaken[col] === Number(this.data["rows"])) {
-        let colInstructionTiles = this.document.querySelectorAll(
-          "[tile=col][x='" + col + "']"
-        );
-        colInstructionTiles.forEach((tile) => {
-          tile.childNodes[0].style.color = "#999";
-        });
+  getCommonOverlap(perms) {
+    let common = [];
+    for (let i = 0; i < perms[0].length; i++) {
+      let value = perms[0][i];
+      let isSame = true;
 
-        let tiles = this.document.querySelectorAll(
-          "[tile=board][x='" + col + "']"
-        );
-        tiles.forEach((tile) => {
-          tile.childNodes[0].style.backgroundColor = "#999";
-        });
+      for (let j = 1; j < perms.length; j++) {
+        if (perms[j][i] === value) continue;
+        else {
+          isSame = false;
+          break;
+        }
+      }
+      if (isSame) {
+        common[i] = value;
+      } else {
+        common[i] = TileState.Unknown;
       }
     }
+    return common;
+  }
 
-    for (let row in rowSpaceTaken) {
-      if (rowSpaceTaken[row] === Number(this.data["columns"])) {
-        let rowInstructionTiles = this.document.querySelectorAll(
-          "[tile=row][y='" + row + "']"
-        );
-        rowInstructionTiles.forEach((tile) => {
-          tile.childNodes[0].style.color = "#999";
-        });
+  getPossiblePerms() {
+    // Go through all instructions
+    for (let col = 0; col < this.board.columns; col++) {
+      // get all possible perms and add it to our possible lists
+      let possiblePerms = this.findPermutations(
+        this.board.getSingleColInstructions(col),
+        this.board.rows
+      );
+      possiblePerms.forEach((perm) => {
+        this.possibleColumnPerms[col].push(perm);
+      });
+    }
 
-        let tiles = this.document.querySelectorAll(
-          "[tile=board][y='" + row + "']"
+    for (let row = 0; row < this.board.rows; row++) {
+      let possiblePerms = this.findPermutations(
+        this.board.getSingleRowInstructions(row),
+        this.board.columns
+      );
+      possiblePerms.forEach((perm) => {
+        this.possibleRowPerms[row].push(perm);
+      });
+    }
+  }
+
+  findCommonOverlaps() {
+    for (let col = 0; col < this.board.columns; col++) {
+      let common = this.getCommonOverlap(this.possibleColumnPerms[col]);
+      for (let i = 0; i < common.length; i++) {
+        if (common[i] !== TileState.Unknown) {
+          this.board.setTileState(col, i, common[i]);
+        }
+      }
+    }
+
+    for (let row = 0; row < this.board.columns; row++) {
+      let common = this.getCommonOverlap(this.possibleRowPerms[row]);
+      for (let i = 0; i < common.length; i++) {
+        if (common[i] !== TileState.Unknown) {
+          this.board.setTileState(i, row, common[i]);
+        }
+      }
+    }
+  }
+
+  finalizeSinglePerms() {
+    for (let col = 0; col < this.board.columns; col++) {
+      if (this.possibleColumnPerms[col].length === 1) {
+        this.board.setFinalGridSet(
+          this.possibleColumnPerms[col][0],
+          col,
+          false
         );
-        tiles.forEach((tile) => {
-          tile.childNodes[0].style.backgroundColor = "#999";
-        });
+      }
+    }
+    for (let row = 0; row < this.board.rows; row++) {
+      if (this.possibleRowPerms[row].length === 1) {
+        this.board.setFinalGridSet(this.possibleRowPerms[row][0], row, true);
+      }
+    }
+  }
+
+  pruneInvalidPerms() {
+    // prune possiblerowperms that arent valid with current board
+    // iterate over all rows/cols and loop through possible perms
+    for (let col = 0; col < this.board.columns; col++) {
+      for (let i = this.possibleColumnPerms[col].length - 1; i >= 0; i--) {
+        if (
+          !this.board.isCompatableSet(
+            this.possibleColumnPerms[col][i],
+            col,
+            false
+          )
+        ) {
+          this.possibleColumnPerms[col].splice(i, 1);
+        }
+      }
+    }
+
+    for (let row = 0; row < this.board.rows; row++) {
+      for (let i = this.possibleRowPerms[row].length - 1; i >= 0; i--) {
+        if (
+          !this.board.isCompatableSet(this.possibleRowPerms[row][i], row, true)
+        ) {
+          this.possibleRowPerms[row].splice(i, 1);
+        }
       }
     }
   }
 
   async solve(data, document) {
-    let colSums = {};
-    let colNumTiles = {};
-    let rowSums = {};
-    let rowNumTiles = {};
+    this.shadeCompletedRows();
 
-    // Gets all top level column tiles
-    let colTiles = this.board.getColumnInstructions(0);
+    this.getPossiblePerms();
+    let iter = 0;
+    while (!this.board.isSolved()) {
+      iter++;
+      this.findCommonOverlaps();
+      this.pruneInvalidPerms();
 
-    // Iterate over them and sum the values
-    for (let i = 0; i < colTiles.length; i++) {
-      let colId = i;
-      if (!(colId in colSums) || !(colId in colNumTiles)) {
-        colSums[colId] = 0;
-        colNumTiles[colId] = 0;
-      }
-
-      // Get all tiles in column
-      let columnChildren = this.board.getSingleColInstructions(colId);
-      columnChildren.forEach((colChild) => {
-        if (colChild === -1) return;
-        colSums[colId] += Number(colChild);
-        if (Number(colChild !== -1)) {
-          colNumTiles[colId] += 1;
-        }
-      });
+      this.finalizeSinglePerms();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-
-    // Gets all leftmost row tiles
-    let rowTiles = this.board.getRowInstructions(0);
-
-    // Iterate over them and sum the values
-    for (let i = 0; i < rowTiles.length; i++) {
-      let rowId = i;
-      if (!(rowId in rowSums) || !(rowId in rowNumTiles)) {
-        rowSums[rowId] = 0;
-        rowNumTiles[rowId] = 0;
-      }
-
-      // Get all tiles in row
-      let rowChildren = this.board.getSingleRowInstructions(rowId);
-      rowChildren.forEach((rowChild) => {
-        if (rowChild === -1) return;
-        rowSums[rowId] += Number(rowChild);
-        if (Number(rowChild !== -1)) {
-          rowNumTiles[rowId] += 1;
-        }
-      });
-    }
-    this.findPermutations([3, 2, 6], 15);
-    //this.shadeCompletedRows(colSums, colNumTiles, rowSums, rowNumTiles);
-    // Go through each column and check the board to see if it's acceptable
+    console.log("Solved in " + iter + " iterations.");
+    // Loop through all perms and check against board to see if we should remove them from possibleperms lists
   }
 }
