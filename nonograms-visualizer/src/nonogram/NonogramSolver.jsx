@@ -278,12 +278,18 @@ export default class Solver {
           password[i2] = 0;
         }
       }
+
       let perm = [];
+      let breakEarly = false;
       for (let i2 = 0; i2 < password_length; i2++) {
+        if (i2 > 0 && chars[password[i2]] === "0") {
+          breakEarly = true;
+          break;
+        }
         perm.push(chars[password[i2]]);
       }
 
-      if (this.isValidPermute(perm, maxVal)) {
+      if (!breakEarly && this.isValidPermute(perm, maxVal)) {
         permutations.push(perm);
       }
 
@@ -376,9 +382,11 @@ export default class Solver {
     return common;
   }
 
-  getPossiblePerms() {
+  async getPossiblePerms() {
     // Go through all instructions
     for (let col = 0; col < this.board.columns; col++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      console.log("col: " + col);
       // get all possible perms and add it to our possible lists
       let possiblePerms = this.findPermutations(
         this.board.getSingleColInstructions(col),
@@ -390,10 +398,13 @@ export default class Solver {
     }
 
     for (let row = 0; row < this.board.rows; row++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      console.log("row: " + row);
       let possiblePerms = this.findPermutations(
         this.board.getSingleRowInstructions(row),
         this.board.columns
       );
+
       possiblePerms.forEach((perm) => {
         this.possibleRowPerms[row].push(perm);
       });
@@ -410,7 +421,7 @@ export default class Solver {
       }
     }
 
-    for (let row = 0; row < this.board.columns; row++) {
+    for (let row = 0; row < this.board.rows; row++) {
       let common = this.getCommonOverlap(this.possibleRowPerms[row]);
       for (let i = 0; i < common.length; i++) {
         if (common[i] !== TileState.Unknown) {
@@ -465,10 +476,75 @@ export default class Solver {
     }
   }
 
-  async solve(data, document) {
-    this.shadeCompletedRows();
+  printRow(row) {
+    console.log(row.map((i) => (i ? "$" : "-")).join(""));
+  }
 
-    this.getPossiblePerms();
+  requiredCells(nums) {
+    return nums.reduce((sum, i) => sum + (i + 1), 0) - 1;
+  }
+
+  appendRow(init, pendingNums, rowSize, comb) {
+    if (pendingNums.length === 0) {
+      comb.push(init);
+      return false;
+    }
+    const cellsRequired = this.requiredCells(pendingNums);
+    if (cellsRequired > rowSize) {
+      return false;
+    }
+    let gapSize = 0;
+    const pNumsAux = pendingNums.slice(1);
+    let space = rowSize;
+    while (gapSize + cellsRequired <= rowSize) {
+      space = rowSize;
+      space -= gapSize;
+      const prefix = [...init];
+      for (let i = 0; i < gapSize; i++) {
+        prefix.push(false);
+      }
+      for (let i = 0; i < pendingNums[0]; i++) {
+        prefix.push(true);
+        space--;
+      }
+      if (space > 0) {
+        prefix.push(false);
+        space--;
+      }
+      this.appendRow(prefix, pNumsAux, space, comb);
+      gapSize++;
+    }
+    return true;
+  }
+
+  getCombinations(row, rowSize) {
+    const comb = [];
+    const init = [];
+    this.appendRow(init, row, rowSize, comb);
+    return comb;
+  }
+
+  async solve(data, document) {
+    const row = [2, 5, 1, 2, 1, 4, 1, 2, 4];
+    const ret = this.getCombinations(row, 35);
+
+    for (const r of ret) {
+      while (r.length < 35) {
+        r.push(false);
+      }
+      this.printRow(r);
+    }
+
+    return;
+
+    this.shadeCompletedRows();
+    console.log("finished shading");
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    console.log("starting perms");
+    await this.getPossiblePerms();
+    console.log("Finished creating possible perms");
+
     let iter = 0;
     while (!this.board.isSolved()) {
       iter++;
@@ -476,7 +552,7 @@ export default class Solver {
       this.pruneInvalidPerms();
 
       this.finalizeSinglePerms();
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
     console.log("Solved in " + iter + " iterations.");
     // Loop through all perms and check against board to see if we should remove them from possibleperms lists

@@ -18,7 +18,7 @@ namespace NonogramsVisualizerAPI {
             //options.AddArgument("--headless");
             options.AddArgument("--log-level=3");
             options.BinaryLocation = "C:\\Apps\\Chrome\\chrome.exe";
-            
+
 
             driver = new ChromeDriver(ChromeDriverService.CreateDefaultService(), options, TimeSpan.FromSeconds(180));
             isAvailable = true;
