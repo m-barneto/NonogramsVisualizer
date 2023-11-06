@@ -227,6 +227,31 @@ class Board {
     }
     return true;
   }
+
+  isEmpty() {
+    for (let x = 0; x < this.columns; x++) {
+      for (let y = 0; y < this.rows; y++) {
+        if (this.board[x][y].state !== TileState.Unknown) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  isRowEmpty(idx) {
+    for (let x = 0; x < this.columns; x++) {
+      if (this.board[x][idx].state !== TileState.Unknown) return false;
+    }
+    return true;
+  }
+
+  isColEmpty(idx) {
+    for (let y = 0; y < this.rows; y++) {
+      if (this.board[idx][y].state !== TileState.Unknown) return false;
+    }
+    return true;
+  }
 }
 
 export default class Solver {
@@ -347,6 +372,7 @@ export default class Solver {
     let perms = this.getPermutations(values, numGroups, numSpaces);
 
     let gridPerms = this.translatePermsToGridFormat(instr, perms, length);
+    console.log(gridPerms);
     return gridPerms;
   }
 
@@ -388,7 +414,7 @@ export default class Solver {
       await new Promise((resolve) => setTimeout(resolve, 100));
       console.log("col: " + col);
       // get all possible perms and add it to our possible lists
-      let possiblePerms = this.findPermutations(
+      let possiblePerms = this.getCombinations(
         this.board.getSingleColInstructions(col),
         this.board.rows
       );
@@ -400,7 +426,7 @@ export default class Solver {
     for (let row = 0; row < this.board.rows; row++) {
       await new Promise((resolve) => setTimeout(resolve, 100));
       console.log("row: " + row);
-      let possiblePerms = this.findPermutations(
+      let possiblePerms = this.getCombinations(
         this.board.getSingleRowInstructions(row),
         this.board.columns
       );
@@ -449,9 +475,16 @@ export default class Solver {
   }
 
   pruneInvalidPerms() {
+    if (this.board.isEmpty()) return;
     // prune possiblerowperms that arent valid with current board
     // iterate over all rows/cols and loop through possible perms
     for (let col = 0; col < this.board.columns; col++) {
+      console.log("col: " + col);
+      console.log("perms: " + this.possibleColumnPerms[col].length);
+      if (this.board.isColEmpty(col)) {
+        console.log("Empty col, skipping.");
+        continue;
+      }
       for (let i = this.possibleColumnPerms[col].length - 1; i >= 0; i--) {
         if (
           !this.board.isCompatableSet(
@@ -466,6 +499,12 @@ export default class Solver {
     }
 
     for (let row = 0; row < this.board.rows; row++) {
+      console.log("row: " + row);
+      console.log("perms: " + this.possibleRowPerms[row].length);
+      if (this.board.isRowEmpty(row)) {
+        console.log("Empty row, skipping.");
+        continue;
+      }
       for (let i = this.possibleRowPerms[row].length - 1; i >= 0; i--) {
         if (
           !this.board.isCompatableSet(this.possibleRowPerms[row][i], row, true)
@@ -521,22 +560,17 @@ export default class Solver {
     const comb = [];
     const init = [];
     this.appendRow(init, row, rowSize, comb);
-    return comb;
+    let perms = [];
+    for (const r of comb) {
+      while (r.length < rowSize) {
+        r.push(false);
+      }
+      perms.push(r.map((i) => (i ? 1 : 0)));
+    }
+    return perms;
   }
 
   async solve(data, document) {
-    const row = [2, 5, 1, 2, 1, 4, 1, 2, 4];
-    const ret = this.getCombinations(row, 35);
-
-    for (const r of ret) {
-      while (r.length < 35) {
-        r.push(false);
-      }
-      this.printRow(r);
-    }
-
-    return;
-
     this.shadeCompletedRows();
     console.log("finished shading");
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -548,11 +582,15 @@ export default class Solver {
     let iter = 0;
     while (!this.board.isSolved()) {
       iter++;
-      this.findCommonOverlaps();
+      console.log("Pruning invalid perms.");
       this.pruneInvalidPerms();
-
+      console.log("Finding overlaps.");
+      this.findCommonOverlaps();
+      console.log("Finalizing single perms.");
       this.finalizeSinglePerms();
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      console.log("Done finalizing.");
+      console.log(iter);
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
     console.log("Solved in " + iter + " iterations.");
     // Loop through all perms and check against board to see if we should remove them from possibleperms lists
