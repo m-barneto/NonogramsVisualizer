@@ -26,7 +26,7 @@ namespace NonogramsVisualizerAPI.Controllers {
             return driver.FindElement(By.XPath(xpath));
         }
 
-        [HttpPost]
+        [HttpGet]
         [Route("{nonogramCode}")]
         public async Task<IActionResult> GetDataFromId(string nonogramCode) {
             try {

@@ -1,14 +1,16 @@
+:root {
+  --cell-size: 18px;
+  --font-size: 18px - 4px;
+}
+
 td {
   border: 1px solid #8f8f8f;
-  width: 18px;
-  height: 18px;
   font-size: 0;
   color: black;
   background-color: #d0d0d0;
 }
 td > div {
-  width: 18px;
-  height: 18px;
+  width: 100%;
   text-align: center;
   font-size: 14px;
   line-height: 15px;

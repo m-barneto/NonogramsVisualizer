@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import Nonogram from "./Nonogram";
+import Nonogram from "./Nonogram.jsx";
 
 export default class Homepage extends Component {
   constructor(props) {
@@ -21,9 +21,7 @@ export default class Homepage extends Component {
         </div>
         <div id="content">
           <div id="left"></div>
-          <div id="right">
-            <Nonogram />
-          </div>
+          <div id="right">{/*<Nonogram /*/}</div>
         </div>
       </div>
     );
