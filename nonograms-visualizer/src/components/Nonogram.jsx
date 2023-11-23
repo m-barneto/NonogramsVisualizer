@@ -1,6 +1,8 @@
-import React, { Component } from "react";
+import React, { Component, useCallback, useState, useEffect } from "react";
 import Table from "./nonogram/Table";
 import Solver from "../nonogram/NonogramSolver";
+
+
 
 export default class Nonogram extends Component {
   constructor(props) {
@@ -16,7 +18,7 @@ export default class Nonogram extends Component {
     while (document.querySelectorAll("Table").length === 0) {
       await this.sleep(100);
     }
-    let solver = new Solver(document, this.props.data);
+    //let solver = new Solver(document, this.props.data);
     //solver.solve();
   };
 
